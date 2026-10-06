@@ -1,0 +1,13 @@
+services:
+  frontend:
+    build: ./frontend
+    depends_on: 
+      - server
+    ports:
+      - 3000:3000
+
+  server:
+    build: ./server
+    ports:
+      - 8000:8000
+      
