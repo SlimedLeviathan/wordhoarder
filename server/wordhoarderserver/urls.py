@@ -16,10 +16,12 @@ Including another URLconf
 """
 
 from django.contrib import admin
+from django.http import HttpResponse
 from django.urls import include, path
 from .auth.urls import urls as authUrls
 
 urlpatterns = [
+    path("", lambda request: HttpResponse("Server is running!!!")),
     path("admin/", admin.site.urls),
     path("auth/", include(authUrls))
 ]
