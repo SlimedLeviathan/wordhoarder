@@ -144,6 +144,36 @@ After running the commands, the frontend will be running [here](http://localhost
 
 **Make sure you run this in a separate terminal.**
 
+You only have to run these commands once.
+*As the project updates, you might need to run these again.*
+Also make sure you are in the server directory.
+
+This one installs required modules.
+```
+pip install -r requirements.txt
+```
+
+To update the requirements file, use: (This takes the things you have installed through pip, and puts them into a text file. You should use a virtual python environment if you plan to do this, as you might add unnecessary modules to the requirements file.)
+```
+pip freeze > requirements.txt
+```
+
+This one creates the database with migrations we make to the database.
+```
+python manage.py migrate
+```
+
+If you make or update database models, run this: (This will cause new migrations to be made, which will then require you to run the previous command.)
+```
+python manage.py makemigrations
+```
+
+This one creates a superuser with the username admin and email admin@example.com. It will also prompt you to make a password as well.
+```
+python manage.py createsuperuser --username admin --email admin@example.com
+```
+
+Run this to start the server:
 ```
 cd server
 python manage.py runserver

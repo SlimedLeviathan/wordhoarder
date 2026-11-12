@@ -13,6 +13,8 @@ import TheWelcome from './components/TheWelcome.vue'
   </header>
 
   <main>
+    <router-view/>
+    
     <TheWelcome />
   </main>
 </template>

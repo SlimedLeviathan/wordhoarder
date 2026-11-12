@@ -2,8 +2,17 @@ FROM python
 
 COPY . /
 
+# install pip modules
 RUN python -m pip install -r requirements.txt
 
+# run database migrations
+RUN python manage.py migrate
+
+# create superuser
+RUN python manage.py createsuperuser --username admin --email admin@example.com
+
+# expose the 8000 port
 EXPOSE 8000
 
+# run the server on 0.0.0.0 (output ip for docker) :8000 (the port we exposed)
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

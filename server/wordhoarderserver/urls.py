@@ -19,9 +19,19 @@ from django.contrib import admin
 from django.http import HttpResponse
 from django.urls import include, path
 from .auth.urls import urls as authUrls
+from rest_framework import routers
+from .views import PlayerViewSet, PlayerScoreViewSet, DayDataViewSet, BattleViewSet
+
+router = routers.DefaultRouter()
+
+router.register("players", PlayerViewSet)
+router.register("playerScores", PlayerScoreViewSet)
+router.register("dayData", DayDataViewSet)
+router.register("battleInstances", BattleViewSet)
 
 urlpatterns = [
     path("", lambda request: HttpResponse("Server is running!!!")),
     path("admin/", admin.site.urls),
-    path("auth/", include(authUrls))
+    path("auth/", include(authUrls)),
+    path("models/", include(router.urls)),
 ]
