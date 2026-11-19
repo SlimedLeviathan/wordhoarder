@@ -165,7 +165,7 @@ python manage.py migrate
 
 If you make or update database models, run this: (This will cause new migrations to be made, which will then require you to run the previous command.)
 ```
-python manage.py makemigrations
+python manage.py makemigrations wordhoarderserver
 ```
 
 This one creates a superuser with the username admin and email admin@example.com. It will also prompt you to make a password as well.

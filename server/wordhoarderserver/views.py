@@ -4,26 +4,27 @@ from rest_framework import viewsets
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
-from rest_framework.decorators import action
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.decorators import action, api_view, permission_classes, authentication_classes
 from django.shortcuts import get_object_or_404
+from django.contrib.auth.hashers import make_password
 from rest_framework_simplejwt.tokens import AccessToken
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from uuid import uuid4
+
 
 class PlayerViewSet(viewsets.ViewSet):
     queryset = Player.objects.all()
+    # authentication_classes=[]
     serializer_class = PlayerSerializer
 
     def get_permissions(self):
         """
         Instantiates and returns the list of permissions that this view requires.
         """
-        print(self.action)
 
-        if self.action == 'list':
-            permission_classes = [IsAdminUser]
-        elif self.action == "create":
-            permission_classes = [AllowAny] # since people dont have auth before creating an account
+        if self.action == "create":
+            permission_classes = [AllowAny]
         else:
             permission_classes = [IsAuthenticated]
         return [permission() for permission in permission_classes]
@@ -31,19 +32,33 @@ class PlayerViewSet(viewsets.ViewSet):
     def list(self, request:Request):
         self.perform_authentication(request)
 
-        queryset = Player.objects.all()
+        admin = False
+        user = None
+
+        for a in request.authenticators:
+            if isinstance(a, IsAdminUser):
+                admin = True
+
+            elif isinstance(a, JWTAuthentication):
+                user = a.get_user(request.auth)
+
+        queryset = None
+
+        if admin:
+            queryset = Player.objects.all()
+        elif user != None:
+            queryset = Player.objects.filter(id=user.id)
+    
         serializer = PlayerSerializer(queryset, many=True)
         return Response(serializer.data)
 
     def create(self, request:Request):
         body = request.data
 
-        print(body)
-
         Player.objects.create(
             username=body["username"],
             email=body["email"],
-            password=body["password"],
+            password=make_password(body["password"]),
         )
 
         return Response("User created sucessfully.")
@@ -65,61 +80,24 @@ class PlayerViewSet(viewsets.ViewSet):
     def destroy(self, request:Request, pk=None):
         self.perform_authentication(request)
 
-    @action(detail=True, methods=["post"])
+    @action(detail=True, methods=["POST"], url_path="createResetLink", url_name="createResetLink")
     def create_reset_password_link(self, request:Request, pk=None):
         # do one of 2 authentications: the first is from normal authentication
         # the second one is just from the user's username
 
         # if they are not logged into their account, they are able to enter their username
-        
         self.perform_authentication(request)
 
-        print(pk, request.auth)
+        # get player from authenticator
+        user = get_user(request)
 
-        if pk != request.auth:
+        if int(pk) != user.id:
             return Response("Player ID did not match.")
 
         # get player object
         player = Player.objects.get(id=pk)
 
-        # create a link for the password to be reset from
-        player.resetPasswordToken = uuid4()
-
-        # set the link to expire in an hour
-        player.resetPasswordExpire = datetime.now() + timedelta(hours=1)
-        player.save()
-
-        # send link to the users email
-        passlink = "localhost:8000/reset_password/" + player.resetPasswordToken
-
-        player.user.email_user("The reset password link for the WordHoarder account of:", player.user.username ,"is:\n\n", passlink ,"\n\nDo not share this link with anyone else.")
-
-        return Response("Reset Password Link sent.")
-
-    @action(detail=True, methods=["post"])
-    def reset_password(self, request:Request, pk=None):
-        # get request body
-        body = request.data
-
-        print(body)
-
-        print(body["resetID"])
-        print(body["newPass"])
-
-        # the request should send the id that the request was made from
-        player = Player.objects.get(id=pk)
-        if body["resetID"] != player.resetPasswordToken:
-            return Response("Reset Password ID was incorrect.")
-
-        # also make sure that the link hasn't expired
-        if datetime.now() > player.resetPasswordExpire:
-            return Response("Reset Password Link has expired.")
-
-        # update password
-        player.user.set_password(body["newPass"])
-        player.save()
-        
-        return Response("Password has been reset sucessfully.")
+        return newResetLink(player)
 
 class PlayerScoreViewSet(viewsets.ViewSet):
     queryset = PlayerScore.objects.all()
@@ -171,3 +149,59 @@ class BattleViewSet(viewsets.ViewSet):
         user = get_object_or_404(queryset, pk=pk)
         serializer = BattleSerializer(user)
         return Response(serializer.data)
+
+@api_view(["POST"])
+@permission_classes([])
+@authentication_classes([])
+def reset_password(request:Request, id):
+    # get request body
+    body = request.data
+
+    # the request should send the id that the request was made from
+    player = Player.objects.get(resetPasswordToken=id)
+
+    # also make sure that the link hasn't expired
+    if datetime.now().astimezone() > player.resetPasswordExpire or player.resetPasswordUsed == True:
+        return Response("Reset Password Link has expired.")
+
+    # update password
+    player.set_password(body["newPass"])
+    player.resetPasswordUsed = True
+    player.save()
+    
+    return Response("Password has been reset sucessfully.")
+
+# function for if the player forget their password and can't log in, just uses the players username in order to send the email to the account associated with it
+@api_view(["POST"])
+@permission_classes([])
+@authentication_classes([])
+def create_reset_link(request:Request, username):
+    # get player object
+    player = Player.objects.get(username=username)
+
+    if player == None:
+        return Response("No account was associated with the given username.")
+
+    return newResetLink(player)
+
+# helper function to set the players new reset password link and send them an email
+def newResetLink(player:Player):
+    player.resetPasswordToken = uuid4().hex
+
+    # set the link to expire in an hour
+    player.resetPasswordExpire = datetime.now().astimezone() + timedelta(hours=1)
+    player.resetPasswordUsed = False
+    player.save()
+
+    # send link to the users email
+    passlink = "http://localhost:8000/reset_password/" + player.resetPasswordToken + "/"
+
+    player.email_user("WordHoarder Reset Password Link", "The reset password link for the WordHoarder account of: " + player.username + " is:\n\n" + passlink + "\n\nDo not share this link with anyone else.")
+
+    return Response("Reset Password Link sent.")
+
+# helper function that makes it easy to get a user from the authenticator
+def get_user(request:Request):
+    for a in request.authenticators:
+        if isinstance(a, JWTAuthentication):
+            return a.get_user(request.auth)

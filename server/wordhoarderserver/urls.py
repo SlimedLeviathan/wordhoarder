@@ -18,9 +18,13 @@ Including another URLconf
 from django.contrib import admin
 from django.http import HttpResponse
 from django.urls import include, path
-from .auth.urls import urls as authUrls
+from .token.urls import urls as authUrls
 from rest_framework import routers
-from .views import PlayerViewSet, PlayerScoreViewSet, DayDataViewSet, BattleViewSet
+from .views import PlayerViewSet, PlayerScoreViewSet, DayDataViewSet, BattleViewSet, reset_password, create_reset_link
+from .models import Player, DayData
+
+admin.site.register(Player)
+admin.site.register(DayData)
 
 router = routers.DefaultRouter()
 
@@ -32,6 +36,8 @@ router.register("battleInstances", BattleViewSet)
 urlpatterns = [
     path("", lambda request: HttpResponse("Server is running!!!")),
     path("admin/", admin.site.urls),
-    path("auth/", include(authUrls)),
+    path("token/", include(authUrls)),
     path("models/", include(router.urls)),
+    path("reset_password/<str:id>/", reset_password),
+    path("create_reset_link/<str:username>/", create_reset_link)
 ]

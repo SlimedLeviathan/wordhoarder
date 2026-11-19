@@ -14,9 +14,14 @@ class Player(AbstractUser):
     admin:bool = models.BooleanField(default=False)
     resetPasswordToken:str = models.CharField()
     resetPasswordExpire:datetime = models.DateTimeField(default=datetime.min)
+    resetPasswordUsed:bool = models.BooleanField(default=True)
     currentList:list[str] = models.JSONField(default=list)
     streak:int = models.IntegerField(default=0)
     # tracking of score to player comes from the playerscore model keeping the player id
+
+    class Meta:
+        verbose_name="Player"
+        verbose_name_plural="Players"
 
 class PlayerScore(models.Model):
     date:datetime = models.DateField()
@@ -35,6 +40,10 @@ class DayData(models.Model):
     longestScoreData:dict[int,int] = models.JSONField()
     creativeScoreData:dict[int,int] = models.JSONField()
     playerCount:int = models.IntegerField()
+
+    class Meta:
+        verbose_name="Day Data"
+        verbose_name_plural="Day Data"
 
 class BattleInstance(models.Model):
     phrase:str = models.CharField()

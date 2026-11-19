@@ -4,7 +4,8 @@ from rest_framework import serializers
 class PlayerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Player
-        fields="__all__"
+        exclude=["password", "resetPasswordToken", "resetPasswordExpire", "resetPasswordUsed"]
+        # exclude the players password, and everything about reset password values from being sent for privacy
 
 class PlayerScoreSerializer(serializers.ModelSerializer):
     class Meta:
