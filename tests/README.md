@@ -47,6 +47,7 @@ All of the things that the server should check before allowing the user to chang
 After all of this, the password is then reset and the user gets a notification that their password was reset. If any of the previous checks go wrong, the server should instead send an error detailing the problem.
 
 ### Frontend Word Input
+This function handles the user's word submission on the client side before sending any request to the server. It formats the input (such as trimming whitespace and converting letters to uppercase) and checks basic client-side constraints, including ensuring the input is not empty, matches the required character length, and contains only valid alphabetic characters (no numbers or symbols). If the input is invalid, it displays a warning message to the user and blocks the API call.
 ### Server Word Validation
 
 ## Component Tests
