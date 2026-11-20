@@ -11,6 +11,7 @@ from django.contrib.auth.hashers import make_password
 from rest_framework_simplejwt.tokens import AccessToken
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
+from email_validator import EmailNotValidError, validate_email
 
 
 class PlayerViewSet(viewsets.ViewSet):
@@ -55,10 +56,37 @@ class PlayerViewSet(viewsets.ViewSet):
     def create(self, request:Request):
         body = request.data
 
+        # make sure another user does not have the same name
+        name = body["username"]
+
+        if Player.objects.get(username=name) != None:
+            return Response("Another user with that username already exists.")
+
+        email = body["email"]
+
+        emailError = None
+
+        # check email
+        try:
+            validate_email(email)
+        except EmailNotValidError as e:
+            emailError = str(e)
+
+        if emailError != None:
+            return Response("Your email was not formatted correctly. Reason: " + e)
+
+        p = body["password"]
+
+        # check password
+        check = check_password(p)
+    
+        if check != True:
+            return Response(check)
+
         Player.objects.create(
-            username=body["username"],
-            email=body["email"],
-            password=make_password(body["password"]),
+            username=name,
+            email=email,
+            password=make_password(p),
         )
 
         return Response("User created sucessfully.")
@@ -155,7 +183,7 @@ class BattleViewSet(viewsets.ViewSet):
 @authentication_classes([])
 def reset_password(request:Request, id):
     # get request body
-    body = request.data
+    p = request.data["newPass"]
 
     # the request should send the id that the request was made from
     player = Player.objects.get(resetPasswordToken=id)
@@ -164,8 +192,14 @@ def reset_password(request:Request, id):
     if datetime.now().astimezone() > player.resetPasswordExpire or player.resetPasswordUsed == True:
         return Response("Reset Password Link has expired.")
 
+    # check password
+    check = check_password(p)
+
+    if check != True:
+        return Response(check)
+
     # update password
-    player.set_password(body["newPass"])
+    player.set_password(p)
     player.resetPasswordUsed = True
     player.save()
     
@@ -199,6 +233,15 @@ def newResetLink(player:Player):
     player.email_user("WordHoarder Reset Password Link", "The reset password link for the WordHoarder account of: " + player.username + " is:\n\n" + passlink + "\n\nDo not share this link with anyone else.")
 
     return Response("Reset Password Link sent.")
+
+# password checking helper function
+def check_password(password:str):
+    if len(password) < 8:
+        return "Password needs to be at least 8 characters."
+    if not any(char.isupper() for char in password) or password.isalnum():
+        return "Password needs at least 1 capital letter and at least 1 symbol."
+
+    return True
 
 # helper function that makes it easy to get a user from the authenticator
 def get_user(request:Request):
