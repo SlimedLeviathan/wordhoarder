@@ -5,7 +5,7 @@ This is the readme for the unit and component tests.
 [Overview](#overview)
     [Unit Tests](#unit-tests)
         [User Register](#user-register)
-        [Reset Password Function](#reset-password)
+        [User Data](#get-user-data)
         [Frontend Word Input](#frontend-word-input)
         [Server Word Validation](#server-word-validation)
     [Component Tests](#component-tests)
@@ -26,28 +26,33 @@ The 4 units that we created tests for are:
 ### User Register
 The user register function is a pretty simple function, as it just takes in the users username, password and email and then adds a value to the database based on these values. There are some things that need to be taken care of though.
 
-Users can't have the same name, and the password must fit our criteria.
+Users can't have the same name, the users email must be of a correct format, and the password must fit our criteria.
 
 Our criteria is: 
 * 8 letters or longer
 * At least one number
 * At least one symbol
 
-### Reset Password
-The reset password function is the function that runs when the user submits a password to a link sent to their email, after they ask for a password reset.
+There are 6 automated tests:
+* Unique Name
+* Valid Email
+* 8 Letter Password
+* At least 1 number in password
+* At least 1 symbol in password
 
-What happens before this is that a user asks for a password reset, the server creates a reset password id as a uuid4, which is then saved to the users information. The time that the id was created is also saved alongside this. The server then sends an email containing the link to the reset page, with the reset password id. Whenever someone goes to a reset password link, their link should also contain the id that is saved with their account. When the user submits a new password,the server then gets the id, and then checks the database for the user with this id.
+If any of these fail, then the server should send a 400 response, with a description of the problem.
 
-All of the things that the server should check before allowing the user to change their password is:
-* Making sure the user isn't logged in with some other account
-* Making sure that the id matches with a user
-* Making sure that the id was created within an hour (this makes the link automatically expire after an hour)
-* Making sure the password follows the previous criteria
+### Get User Data
+Getting user data is an important function of the server, and users should not be able to get other users data, unless they are an admin. Security data also should not go to the user. So, the checks for this test are as follows:
 
-After all of this, the password is then reset and the user gets a notification that their password was reset. If any of the previous checks go wrong, the server should instead send an error detailing the problem.
+* Players must be logged in to get their data
+* Player data should not include passwords or reset password information
+* Logged in players should not get other players data 
+
 
 ### Frontend Word Input
 This function handles the user's word submission on the client side before sending any request to the server. It formats the input (such as trimming whitespace and converting letters to uppercase) and checks basic client-side constraints, including ensuring the input is not empty, matches the required character length, and contains only valid alphabetic characters (no numbers or symbols). If the input is invalid, it displays a warning message to the user and blocks the API call.
+
 ### Server Word Validation
 
 ## Component Tests
@@ -61,8 +66,8 @@ The auth sequence details everything that a user would do before they are able t
 
 This includes:
 * Registering a new account
-* Logging into that account
-* Getting the access and refresh tokens
+* Logging into that account (and refreshing the tokens)
 * Using the access and refresh tokens to authorize a task
+* Deleting the account
 
 ### Word Validation

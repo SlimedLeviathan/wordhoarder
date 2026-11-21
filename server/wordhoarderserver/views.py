@@ -9,7 +9,7 @@ from rest_framework.decorators import action, api_view, permission_classes, auth
 from django.shortcuts import get_object_or_404
 from django.contrib.auth.hashers import make_password
 from rest_framework_simplejwt.tokens import AccessToken
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from uuid import uuid4
 from email_validator import EmailNotValidError, validate_email
 
@@ -59,8 +59,8 @@ class PlayerViewSet(viewsets.ViewSet):
         # make sure another user does not have the same name
         name = body["username"]
 
-        if Player.objects.get(username=name) != None:
-            return Response("Another user with that username already exists.")
+        if Player.objects.filter(username=name).exists():
+            return Response("Another user with that username already exists.", 400)
 
         email = body["email"]
 
@@ -68,12 +68,12 @@ class PlayerViewSet(viewsets.ViewSet):
 
         # check email
         try:
-            validate_email(email)
+            validate_email(email, check_deliverability=False) # for ease of tests, we keep delivarability off
         except EmailNotValidError as e:
             emailError = str(e)
 
         if emailError != None:
-            return Response("Your email was not formatted correctly. Reason: " + e)
+            return Response("Your email was not formatted correctly. Reason: " + emailError, 400)
 
         p = body["password"]
 
@@ -81,7 +81,7 @@ class PlayerViewSet(viewsets.ViewSet):
         check = check_password(p)
     
         if check != True:
-            return Response(check)
+            return Response(check, 400)
 
         Player.objects.create(
             username=name,
@@ -94,19 +94,36 @@ class PlayerViewSet(viewsets.ViewSet):
     def retrieve(self, request:Request, pk=None):
         self.perform_authentication(request)
 
+        player = get_user(request)
+
+        if player.id != int(pk):
+            return Response("Players are only allowed to get their own data.", 401)
+
         queryset = Player.objects.all()
         user = get_object_or_404(queryset, pk=pk)
         serializer = PlayerSerializer(user)
         return Response(serializer.data)
 
-    def update(self, request:Request, pk=None):
-        self.perform_authentication(request)
+    # def update(self, request:Request, pk=None):
+    #     self.perform_authentication(request)
 
-    def partial_update(self, request:Request, pk=None):
-        self.perform_authentication(request)
+    # def partial_update(self, request:Request, pk=None):
+    #     self.perform_authentication(request)
 
     def destroy(self, request:Request, pk=None):
         self.perform_authentication(request)
+
+        # make sure the id of the player is the same as the one being deleted
+        player = get_user(request)
+
+        if player.id != int(pk):
+            return Response("Players can only delete themselves.", 400)
+
+        # get player, then delete them
+        p = Player.objects.get(id=pk)
+        p.delete()
+
+        return Response("Player deleted successfully.")
 
     @action(detail=True, methods=["POST"], url_path="createResetLink", url_name="createResetLink")
     def create_reset_password_link(self, request:Request, pk=None):
@@ -238,8 +255,8 @@ def newResetLink(player:Player):
 def check_password(password:str):
     if len(password) < 8:
         return "Password needs to be at least 8 characters."
-    if not any(char.isupper() for char in password) or password.isalnum():
-        return "Password needs at least 1 capital letter and at least 1 symbol."
+    if not any(char.isnumeric() for char in password) or password.isalnum():
+        return "Password needs at least 1 number and at least 1 symbol."
 
     return True
 

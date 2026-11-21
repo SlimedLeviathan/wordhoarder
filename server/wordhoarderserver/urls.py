@@ -19,6 +19,7 @@ from django.contrib import admin
 from django.http import HttpResponse
 from django.urls import include, path
 from .token.urls import urls as authUrls
+from .main.urls import urls as mainUrls
 from rest_framework import routers
 from .views import PlayerViewSet, PlayerScoreViewSet, DayDataViewSet, BattleViewSet, reset_password, create_reset_link
 from .models import Player, DayData
@@ -37,7 +38,8 @@ urlpatterns = [
     path("", lambda request: HttpResponse("Server is running!!!")),
     path("admin/", admin.site.urls),
     path("token/", include(authUrls)),
+    path("main/", include(mainUrls)),
     path("models/", include(router.urls)),
     path("reset_password/<str:id>/", reset_password),
-    path("create_reset_link/<str:username>/", create_reset_link)
+    path("create_reset_link/<str:username>/", create_reset_link),
 ]
