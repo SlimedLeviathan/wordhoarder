@@ -48,7 +48,9 @@ After all of this, the password is then reset and the user gets a notification t
 
 ### Frontend Word Input
 This function handles the user's word submission on the client side before sending any request to the server. It formats the input (such as trimming whitespace and converting letters to uppercase) and checks basic client-side constraints, including ensuring the input is not empty, matches the required character length, and contains only valid alphabetic characters (no numbers or symbols). If the input is invalid, it displays a warning message to the user and blocks the API call.
+
 ### Server Word Validation
+This function handles word checking. The function checks an array of words, and if they follow the criteria needed, they get added to a list. This list shows the valid words a user has submitted.
 
 ## Component Tests
 
