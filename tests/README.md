@@ -71,4 +71,5 @@ This includes:
 * Using the access and refresh tokens to authorize a task
 * Deleting the account
 
-### Word Validation
+### Word Validation and Scoring
+This tests whether the word validation and word scoring work together properly. If a word is valid, it is scored. If it is not valid, it should not be passed to the scoring function.
