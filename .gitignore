@@ -3,3 +3,4 @@
 *__pycache__
 server/.venv
 server/.env
+frontend/.env

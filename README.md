@@ -2,13 +2,11 @@ Table Of Contents:
 1. [Introduction](#introduction)
 2. [Dependencies](#dependencies)
 3. [Starting](#starting-the-application)
-    - [Frontend](#frontend)
-        - [With Docker](#docker)
-        - [With Commands](#commands)
-    - [Server](#backend)
-        - [With Docker](#docker-1)
-        - [With Commands](#commands-1)
-
+    - [With Docker](#docker)
+    - [With Commands](#commands)
+        - [Frontend](#frontend)
+        - [Server](#backend)
+        
 # Introduction
 
 This is the repo for the game WordHoarder, in which players enter words that fit the criteria for the day, gaining points from the number of words they have, the biggest word they have, and the word that is the most creative. The application runs on 2 main parts currently, the Frontend (which handles displaying information and allowing the user to play the game), as well as the Server, or the Backend, which handles the requests from the frontend, as well as the calls to the database.
@@ -29,48 +27,7 @@ If you plan to run the application through Docker:
 
 # Starting the Application
 
-Although it is not needed in order to run the application, it is still good to do these couple of steps, just incase they are needed, or you need to debug anything.
-
-Installing NPM Modules:
-```
-cd frontend
-npm install
-```
-
-Installing Python Modules:
-```
-cd server
-python -m pip install -r requirements.txt
-```
-
-It is best to use a python virtual environment, that way we can easily keep track of the modules we use in our project, and so we only install what we need. Here are some of the commands for that.
-
-Starting a new environment (make sure you are in the server folder)
-
-```
-cd server
-python venv <name of venv folder, i use .venv>
-```
-
-To use the venv:
-```
-./<name>/Scripts/activate
-```
-
-(At this point you would install the modules from the requirements.txt, as well as any other packages you might need)
-```
-pip install -r requirements.txt
-```
-
-Making a new requirements.txt
-```
-pip freeze > requirements.txt
-```
-
-Exiting the venv
-```
-exit
-```
+You can either run the application through Docker, which runs each part of the project in separate containers, or through multiple terminals. Terminals are best for debugging, as they are smaller and quicker, and allow you to run specific commands for development. Docker is better for deploying.
 
 ## Docker
 Docker is a relatively straightforward and simple way to make "containers", which are virtual environments that docker uses in order to easily run basically any software on anything. It turns data and code into images, which are then turned into actual containers, which run the stuff inside of them.
@@ -124,6 +81,22 @@ An advantage to running the commands is that changes to the files are almost ins
 *Secondary Note*: Just like with Docker, other processes might be using the ports the project uses, if so, the terminal should show you where each part of the project is being ran. This is most obvious when you are running multiple of the project at the same time, like having a Docker container running, as well as part of the project in a terminal.
 
 ### Frontend
+Installing NPM Modules:
+```
+cd frontend
+npm install
+```
+
+You also will need to make a copy of the .env.example file, named ".env". It contains the information that shouldn't need to be changed often. For the frontend, this information is the url to the backend.
+
+An easy copy command is:
+```
+copy .env.example .env
+```
+
+You'll still need to manually insert the information into the new .env file, but if there are default values (like the development url for the backend), this keeps them.
+
+**DO NOT ADD PRIVATE INFORMATION INTO .env.example FILES, AS THEY GET SENT TO THE GITHUB**
 
 ```
 cd frontend
@@ -153,7 +126,19 @@ This one installs required modules.
 pip install -r requirements.txt
 ```
 
-To update the requirements file, use: (This takes the things you have installed through pip, and puts them into a text file. You should use a virtual python environment if you plan to do this, as you might add unnecessary modules to the requirements file.)
+You also will need to make a copy of the .env.example file, named ".env". It contains the information that shouldn't need to be changed often. For the backend, this information is the username and password to the email we use to send emails.
+
+An easy copy command is:
+```
+copy .env.example .env
+```
+
+You'll still need to manually insert the information into the new .env file, but if there are default values, this keeps them.
+
+**DO NOT ADD PRIVATE INFORMATION INTO .env.example FILES, AS THEY GET SENT TO THE GITHUB**
+
+To update the requirements file, use: 
+(This takes the things you have installed through pip, and puts them into a text file. You should use a virtual python environment if you plan to do this, as you might add unnecessary modules to the requirements file.)
 ```
 pip freeze > requirements.txt
 ```
@@ -180,3 +165,21 @@ python manage.py runserver
 ```
 
 After running the command, the backend server will be running [here](http://localhost:8000) (Although the link itself might not show anything).
+
+It is best to use a python virtual environment, that way we can easily keep track of the modules we use in our project, and so we only install what we need. Here are some of the commands for that.
+
+Starting a new environment (make sure you are in the server folder)
+```
+cd server
+python venv <name of venv folder, i use .venv>
+```
+
+To use the venv:
+```
+./<name>/Scripts/activate
+```
+
+Exiting the venv
+```
+exit
+```
